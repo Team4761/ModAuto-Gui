@@ -10,7 +10,7 @@ public class SftpUserInfo implements UserInfo {
 
     @Override
     public String getPassword() {
-        return "1234";
+        return "4761";
     }
 
     @Override

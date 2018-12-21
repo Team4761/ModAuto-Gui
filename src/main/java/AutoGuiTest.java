@@ -5,11 +5,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.google.gson.Gson;
 import com.jcraft.jsch.JSchException;
@@ -25,8 +23,11 @@ public class AutoGuiTest extends JFrame {
 	private JPanel contentPane;
 	private JTextField txtCustominput;
 	private JTextField txtParameters;
+	private static JComboBox<String> comboBox;
 
 	private final String TEAM_NUMBER = "4761"; // ALWAYS 4 CHARACTERS
+
+	private static final boolean COMP_MODE = true; // Auto load values
 
 	/**
 	 * Launch the application.
@@ -38,7 +39,7 @@ public class AutoGuiTest extends JFrame {
 					AutoGuiTest frame = new AutoGuiTest();
 					frame.setSize(600, 600);
 					frame.setVisible(true);
-					
+
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -62,54 +63,54 @@ public class AutoGuiTest extends JFrame {
 				ColumnSpec.decode("max(17dlu;default)"),
 				FormSpecs.RELATED_GAP_COLSPEC,
 				ColumnSpec.decode("default:grow"),},
-			new RowSpec[] {
-				FormSpecs.RELATED_GAP_ROWSPEC,
-				FormSpecs.DEFAULT_ROWSPEC,
-				FormSpecs.RELATED_GAP_ROWSPEC,
-				RowSpec.decode("default:grow"),
-				FormSpecs.RELATED_GAP_ROWSPEC,
-				FormSpecs.DEFAULT_ROWSPEC,
-				FormSpecs.RELATED_GAP_ROWSPEC,
-				FormSpecs.DEFAULT_ROWSPEC,
-				FormSpecs.RELATED_GAP_ROWSPEC,
-				FormSpecs.DEFAULT_ROWSPEC,
-				FormSpecs.RELATED_GAP_ROWSPEC,
-				FormSpecs.DEFAULT_ROWSPEC,
-				FormSpecs.RELATED_GAP_ROWSPEC,
-				FormSpecs.DEFAULT_ROWSPEC,}));
-		
-		JComboBox<String> comboBox = new JComboBox<String>();
+				new RowSpec[] {
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						RowSpec.decode("default:grow"),
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,
+						FormSpecs.RELATED_GAP_ROWSPEC,
+						FormSpecs.DEFAULT_ROWSPEC,}));
+
+		comboBox = new JComboBox<String>();
 		comboBox.addItem("Custom");
 		contentPane.add(comboBox, "2, 2, fill, default");
-		
+
 		DefaultListModel<String> listModel = new DefaultListModel<String>();
-		
+
 		JList<String> list = new JList<String>(listModel);
 		list.setToolTipText("Current Sequence\r\n");
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		contentPane.add(list, "6, 4, fill, fill");
-		
 
-		final String customText = "Custom"; 
-		
+
+		final String customText = "Custom";
+
 		txtParameters = new JTextField();
 		txtParameters.setText("Parameters");
 		contentPane.add(txtParameters, "2, 10, fill, default");
 		txtParameters.setColumns(10);
-		
-		
+
+
 		txtCustominput = new JTextField();
 		txtCustominput.setText("CustomInput");
 		contentPane.add(txtCustominput, "2, 12, fill, default");
 		txtCustominput.setColumns(10);
-		
+
 		JButton btnAddSeq = new JButton("Add Seq");
 		btnAddSeq.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String selectedItem = (String)comboBox.getSelectedItem();
-				
+
 				if (selectedItem.equals(customText)) {
 					comboBox.addItem(txtCustominput.getText());
 					listModel.addElement("SEQ {" + txtParameters.getText() + "} " + txtCustominput.getText());
@@ -118,12 +119,12 @@ public class AutoGuiTest extends JFrame {
 				}
 			}
 		});
-		
+
 		contentPane.add(btnAddSeq, "2, 6");
-		
+
 		JButton btnAdd = new JButton("Add Par");
 		btnAdd.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String selectedItem = (String)comboBox.getSelectedItem();
@@ -136,25 +137,25 @@ public class AutoGuiTest extends JFrame {
 				}
 			}
 		});
-		
+
 		contentPane.add(btnAdd, "2, 8");
-		
-		
+
+
 		JButton btnDelete = new JButton("Delete");
 		btnDelete.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int index = list.getSelectedIndex();
-				
+
 				if (index != -1) {
 					listModel.remove(index);
 				}
 			}
 		});
-		
+
 		contentPane.add(btnDelete, "6, 12");
-		
+
 		JButton btnSaveValues = new JButton("Save Values");
 		btnSaveValues.addActionListener(new ActionListener() {
 			@Override
@@ -202,7 +203,7 @@ public class AutoGuiTest extends JFrame {
 		});
 
 		contentPane.add(btnSaveValues, "2, 14");
-		
+
 		JButton btnSend = new JButton("Send");
 		btnSend.addActionListener(new ActionListener() {
 			@Override
@@ -228,7 +229,7 @@ public class AutoGuiTest extends JFrame {
 					String args = parts[1];
 					int i1 = args.indexOf("{");
 					int i2 = args.indexOf("}");
-					args = args.substring(i1+1,i2-2);
+					args = args.substring(i1+1,i2);
 
 					String command = parts[2];
 
@@ -287,7 +288,7 @@ public class AutoGuiTest extends JFrame {
 					ee.printStackTrace();
 				}
 
-				FTPManager ftpManager = new FTPManager("admin", "10." + TEAM_NUMBER.substring(0,2) + "." + TEAM_NUMBER.substring(2) + ".1");
+				FTPManager ftpManager = new FTPManager("lvuser", "roboRIO-" + TEAM_NUMBER + "-frc.local");
 
 				try {
 					ftpManager.sendFile(name, "AutoCommand");
@@ -298,7 +299,70 @@ public class AutoGuiTest extends JFrame {
 				System.out.println(json);
 			}
 		});
-		contentPane.add(btnSend, "4, 14");
+
+		JButton btnLoad = new JButton("Load");
+
+		btnLoad.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser c = new JFileChooser();
+
+				c.addChoosableFileFilter(new FileNameExtensionFilter("*.csv", ".csv"));
+
+				int val = c.showOpenDialog(contentPane);
+
+				if (val == JFileChooser.APPROVE_OPTION) {
+					String name = c.getSelectedFile().toString();
+
+					load(name);
+				}
+			}
+		});
+
+		contentPane.add(btnLoad, "4, 14");
+		contentPane.add(btnSend, "6, 14");
+
+
+		if (COMP_MODE) {
+			load("Compo.csv");
+		}
+	}
+
+	public static void load(String name) {
+		if (!name.endsWith(".csv")) {
+			name += ".csv";
+		}
+		try {
+			FileInputStream fio = new FileInputStream(name);
+
+			int size;
+
+			byte[] data;
+
+			String config = "";
+
+			while((size = fio.available()) > 0) { // I don't know if this works
+				data = new byte[size];
+				fio.read(data);
+				config += new String(data);
+			}
+
+			fio.close();
+
+			comboBox.removeAllItems();
+
+			comboBox.addItem("Custom");
+
+			String[] elements = config.split(",");
+
+			for (String s : elements) {
+				comboBox.addItem(s.trim());
+			}
+
+		} catch (IOException e1) {
+			System.out.println("File may not exist!");
+			e1.printStackTrace();
+		}
 	}
 
 }

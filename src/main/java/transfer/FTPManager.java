@@ -34,7 +34,16 @@ public class FTPManager {
 
         ChannelSftp sftpChannel = (ChannelSftp) channel;
 
-        sftpChannel.put(file, "/home/lvuser/" + name + ".json");
+        try {
+            sftpChannel.put(file, "/home/lvuser/autoModes/" + name + ".json");
+        } catch (SftpException e) {
+	        System.out.println("SFTP Exception");
+            if (e.getMessage().equals("No such file")) {
+	            System.out.println("Creating Directory");
+                sftpChannel.mkdir("/home/lvuser/autoModes/");
+                sftpChannel.put(file, "/home/lvuser/autoModes/" + name + ".json");
+            }
+        }
 
         sftpChannel.exit();
         session.disconnect();
