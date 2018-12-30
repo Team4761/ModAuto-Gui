@@ -6,8 +6,12 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 
 import com.google.gson.Gson;
 import com.jcraft.jsch.JSchException;
@@ -27,7 +31,7 @@ public class AutoGuiTest extends JFrame {
 
 	private final String TEAM_NUMBER = "4761"; // ALWAYS 4 CHARACTERS
 
-	private static final boolean COMP_MODE = true; // Auto load values
+	private static final boolean COMP_MODE = false; // Auto load values
 
 	/**
 	 * Launch the application.
@@ -53,6 +57,7 @@ public class AutoGuiTest extends JFrame {
 	public AutoGuiTest() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 576, 411);
+		setTitle("Modular Autonomous");
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -280,7 +285,10 @@ public class AutoGuiTest extends JFrame {
 
 				String json = new Gson().toJson(data);
 
-				String name = "AutoCommand.json";
+
+				String dateStr = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
+
+				String name = "AutoCommand-" + dateStr + ".json";
 
 				try (PrintWriter out = new PrintWriter(name)) {
 					out.println(json);
@@ -291,7 +299,7 @@ public class AutoGuiTest extends JFrame {
 				FTPManager ftpManager = new FTPManager("lvuser", "roboRIO-" + TEAM_NUMBER + "-frc.local");
 
 				try {
-					ftpManager.sendFile(name, "AutoCommand");
+					ftpManager.sendFile(name, "AutoCommand-" + dateStr);
 				} catch (JSchException | SftpException e1) {
 					e1.printStackTrace();
 				}
