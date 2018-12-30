@@ -1,4 +1,4 @@
-import java.awt.EventQueue;
+import java.awt.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -29,7 +29,7 @@ public class AutoGuiTest extends JFrame {
 	private JTextField txtParameters;
 	private static JComboBox<String> comboBox;
 
-	private final String TEAM_NUMBER = "4761"; // ALWAYS 4 CHARACTERS
+	private final String TEAM_NUMBER = "4761";
 
 	private static final boolean COMP_MODE = false; // Auto load values
 
@@ -213,98 +213,101 @@ public class AutoGuiTest extends JFrame {
 		btnSend.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ListModel<String> lm = list.getModel();
+				try {
+					btnSend.setBackground(Color.WHITE);
 
-				ArrayList<ArrayList<ArrayList<ArrayList<String>>>> data = new ArrayList<>();
+					ListModel<String> lm = list.getModel();
 
-				ArrayList<ArrayList<String>> commandSet = new ArrayList<>();
+					ArrayList<ArrayList<ArrayList<ArrayList<String>>>> data = new ArrayList<>();
 
-				boolean wasLastSeq = false;
-				boolean wasLastPar = false;
-				for (int i=0; i<lm.getSize(); i++) {
-					//{{{"SEQ"}}, {{"DriveStraight", "5"}, {"DriveHorizontal", "3"}, {"TurnAngle", "90"}}},
-					//                {{{"PAR"}}, {{"DriveStraight", "5"}, {"DriveHorizontal", "5"}}}
+					ArrayList<ArrayList<String>> commandSet = new ArrayList<>();
 
-					String element = (lm.getElementAt(i)).trim(); // SEQ {1,2} Command
+					boolean wasLastSeq = false;
+					boolean wasLastPar = false;
+					for (int i = 0; i < lm.getSize(); i++) {
+						//{{{"SEQ"}}, {{"DriveStraight", "5"}, {"DriveHorizontal", "3"}, {"TurnAngle", "90"}}},
+						//                {{{"PAR"}}, {{"DriveStraight", "5"}, {"DriveHorizontal", "5"}}}
 
-					String[] parts = element.split(" ");
+						String element = (lm.getElementAt(i)).trim(); // SEQ {1,2} Command
 
-					String type = parts[0];
+						String[] parts = element.split(" ");
 
-					String args = parts[1];
-					int i1 = args.indexOf("{");
-					int i2 = args.indexOf("}");
-					args = args.substring(i1+1,i2);
+						String type = parts[0];
 
-					String command = parts[2];
+						String args = parts[1];
+						int i1 = args.indexOf("{");
+						int i2 = args.indexOf("}");
+						args = args.substring(i1 + 1, i2);
 
-					if ((!wasLastSeq && type.equals("SEQ"))|| (!wasLastPar && type.equals("PAR"))) {
-						data.add(new ArrayList<>());
+						String command = parts[2];
 
-						if (type.equals("SEQ")) {
-							wasLastSeq = true;
-							wasLastPar = false;
+						if ((!wasLastSeq && type.equals("SEQ")) || (!wasLastPar && type.equals("PAR"))) {
+							data.add(new ArrayList<>());
 
-							ArrayList<ArrayList<ArrayList<String>>> workingSet = data.get(data.size()-1); // Get last element in list (the one that was just added)
+							if (type.equals("SEQ")) {
+								wasLastSeq = true;
+								wasLastPar = false;
 
-							ArrayList<ArrayList<String>> temp = new ArrayList<>();
-							ArrayList<String> temp2 = new ArrayList<>();
-							temp2.add("SEQ");
-							temp.add(temp2);
-							workingSet.add(temp);
+								ArrayList<ArrayList<ArrayList<String>>> workingSet = data.get(data.size() - 1); // Get last element in list (the one that was just added)
 
-							workingSet.add(new ArrayList<>());
+								ArrayList<ArrayList<String>> temp = new ArrayList<>();
+								ArrayList<String> temp2 = new ArrayList<>();
+								temp2.add("SEQ");
+								temp.add(temp2);
+								workingSet.add(temp);
 
-							commandSet = workingSet.get(workingSet.size()-1);
+								workingSet.add(new ArrayList<>());
 
-						} else if (type.equals("PAR")) {
-							wasLastPar = true;
-							wasLastSeq = false;
+								commandSet = workingSet.get(workingSet.size() - 1);
 
-							ArrayList<ArrayList<ArrayList<String>>> workingSet = data.get(data.size()-1); // Get last element in list (the one that was just added)
+							} else if (type.equals("PAR")) {
+								wasLastPar = true;
+								wasLastSeq = false;
 
-							ArrayList<ArrayList<String>> temp = new ArrayList<>();
-							ArrayList<String> temp2 = new ArrayList<>();
-							temp2.add("PAR");
-							temp.add(temp2);
-							workingSet.add(temp);
+								ArrayList<ArrayList<ArrayList<String>>> workingSet = data.get(data.size() - 1); // Get last element in list (the one that was just added)
 
-							workingSet.add(new ArrayList<>());
+								ArrayList<ArrayList<String>> temp = new ArrayList<>();
+								ArrayList<String> temp2 = new ArrayList<>();
+								temp2.add("PAR");
+								temp.add(temp2);
+								workingSet.add(temp);
 
-							commandSet = workingSet.get(workingSet.size()-1);
+								workingSet.add(new ArrayList<>());
+
+								commandSet = workingSet.get(workingSet.size() - 1);
+							}
 						}
+
+						ArrayList<String> commandArr = new ArrayList<>();
+
+						commandArr.add(command);
+						commandArr.add(args);
+
+						commandSet.add(commandArr);
 					}
 
-					ArrayList<String> commandArr = new ArrayList<>();
-
-					commandArr.add(command);
-					commandArr.add(args);
-
-					commandSet.add(commandArr);
-				}
-
-				String json = new Gson().toJson(data);
+					String json = new Gson().toJson(data);
 
 
-				String dateStr = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
+					String dateStr = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(Calendar.getInstance().getTime());
 
-				String name = "AutoCommand-" + dateStr + ".json";
+					String name = "AutoCommand-" + dateStr + ".json";
 
-				try (PrintWriter out = new PrintWriter(name)) {
+					PrintWriter out = new PrintWriter(name);
 					out.println(json);
-				} catch (FileNotFoundException ee) {
-					ee.printStackTrace();
-				}
 
-				FTPManager ftpManager = new FTPManager("lvuser", "roboRIO-" + TEAM_NUMBER + "-frc.local");
+					FTPManager ftpManager = new FTPManager("lvuser", "roboRIO-" + TEAM_NUMBER + "-frc.local");
 
-				try {
 					ftpManager.sendFile(name, "AutoCommand-" + dateStr);
-				} catch (JSchException | SftpException e1) {
-					e1.printStackTrace();
-				}
 
-				System.out.println(json);
+					System.out.println(json);
+
+					btnSend.setBackground(Color.GREEN);
+				} catch (Exception ee) {
+					ee.printStackTrace();
+					System.out.println("Error Has occurred");
+					btnSend.setBackground(Color.RED);
+				}
 			}
 		});
 
